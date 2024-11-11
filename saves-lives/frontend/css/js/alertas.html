@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Configurar Alertas - Saves Lives +</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            color: #333;
+            margin: 20px 0;
+            font-size: 2.5em;
+        }
+        .container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            width: 400px;
+            margin-top: 20px;
+        }
+        label {
+            font-weight: bold;
+            color: #333;
+            display: block;
+            margin-top: 10px;
+        }
+        select, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #back-btn, #view-alerts-btn {
+            background-color: #007BFF;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        #back-btn:hover, #view-alerts-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Configurar Alertas</h1>
+    <div class="container">
+        <button id="back-btn" onclick="window.location.href='/'">Voltar</button>
+        <button id="view-alerts-btn" onclick="window.location.href='/alertas/lista'">Ver Alertas Criados</button>
+        
+        <!-- Campo para Nome do Alerta -->
+        <label for="alerta-nome">Nome do Alerta:</label>
+        <input type="text" id="alerta-nome" placeholder="Ex: Alerta de Temperatura Alta">
+
+        <!-- Campo para Tipo de Alerta -->
+        <label for="alerta-tipo">Tipo de Alerta:</label>
+        <select id="alerta-tipo">
+            <option value="Temperatura alta">Temperatura alta</option>
+            <option value="Temperatura baixa">Temperatura baixa</option>
+            <option value="Chuva intensa">Chuva intensa</option>
+            <!-- Adicione mais opções de alerta conforme necessário -->
+        </select>
+
+        <!-- Campo para Condição -->
+        <label for="alerta-condicao">Condição:</label>
+        <select id="condicao-seletor">
+            <option value="acima">Acima de</option>
+            <option value="abaixo">Abaixo de</option>
+        </select>
+        <input type="text" id="alerta-condicao" placeholder="Digite o valor da condição (ex: 30°C)">
+
+        <!-- Campo para o Estado -->
+        <label for="estado">Estado:</label>
+        <select id="estado">
+            <option value="Todos">Todos os Estados</option>
+            <option value="AC">Acre</option>
+            <option value="AL">Alagoas</option>
+            <option value="AP">Amapá</option>
+            <option value="AM">Amazonas</option>
+            <option value="BA">Bahia</option>
+            <option value="CE">Ceará</option>
+            <option value="DF">Distrito Federal</option>
+            <option value="ES">Espírito Santo</option>
+            <option value="GO">Goiás</option>
+            <option value="MA">Maranhão</option>
+            <option value="MT">Mato Grosso</option>
+            <option value="MS">Mato Grosso do Sul</option>
+            <option value="MG">Minas Gerais</option>
+            <option value="PA">Pará</option>
+            <option value="PB">Paraíba</option>
+            <option value="PR">Paraná</option>
+            <option value="PE">Pernambuco</option>
+            <option value="PI">Piauí</option>
+            <option value="RJ">Rio de Janeiro</option>
+            <option value="RN">Rio Grande do Norte</option>
+            <option value="RS">Rio Grande do Sul</option>
+            <option value="RO">Rondônia</option>
+            <option value="RR">Roraima</option>
+            <option value="SC">Santa Catarina</option>
+            <option value="SP">São Paulo</option>
+            <option value="SE">Sergipe</option>
+            <option value="TO">Tocantins</option>
+        </select>
+
+        <!-- Campo para Status do Alerta -->
+        <label for="alerta-ativo">Ativo:</label>
+        <select id="alerta-ativo">
+            <option value="ativo">Ativo</option>
+            <option value="inativo">Inativo</option>
+        </select>
+
+        <button id="salvar-alerta">Salvar Alerta</button>
+    </div>
+
+    <script>
+        document.getElementById("salvar-alerta").addEventListener("click", function() {
+            const nome = document.getElementById("alerta-nome").value; // Nome do alerta
+            const tipo = document.getElementById("alerta-tipo").value; // Tipo de alerta
+            const condicao = document.getElementById("condicao-seletor").value;
+            const valorCondicao = document.getElementById("alerta-condicao").value;
+            const estado = document.getElementById("estado").value;  // Estado específico ou "Todos"
+            const ativo = document.getElementById("alerta-ativo").value === "ativo"; // Status do alerta
+
+            if (!nome || !valorCondicao) {
+                alert("Por favor, preencha o nome do alerta e o valor da condição.");
+                return;
+            }
+
+            const alerta = {
+                nome: nome,
+                tipo: tipo,
+                condicao: `${condicao} ${valorCondicao}°C`,
+                estado: estado,
+                ativo: ativo
+            };
+
+            fetch("/alertas", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(alerta)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.mensagem) {
+                    alert(data.mensagem);
+                    window.location.href = "/alertas/lista";  // Redireciona para a lista de alertas
+                } else {
+                    alert("Erro ao salvar o alerta.");
+                }
+            })
+            .catch(error => console.error("Erro ao salvar alerta:", error));
+        });
+    </script>
+</body>
+</html>

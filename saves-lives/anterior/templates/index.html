@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Saves Lives + - Mapa de Resgate Interativo</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <style>
+        /* Estilos para o layout */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 90%;
+            max-width: 1600px;
+            margin: 20px auto;
+        }
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+        }
+        #create-alert-btn {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        #map-container {
+            display: flex;
+            width: 95%;
+            max-width: 1600px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            height: 80vh;
+        }
+        #map {
+            height: 100%;
+            width: 65%;
+        }
+        #info-container {
+            height: 100%;
+            width: 35%;
+            padding: 20px;
+            background-color: #f9f9f9;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            border-left: 3px solid #4CAF50;
+            overflow-y: auto;
+        }
+        #tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+        .tab {
+            font-size: 1.1em;
+            color: #555;
+            padding: 10px;
+            flex: 1;
+            text-align: center;
+            border-bottom: 2px solid transparent;
+            transition: color 0.3s;
+        }
+        .tab.active {
+            color: #4CAF50;
+            border-bottom: 2px solid #4CAF50;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .forecast-container {
+            height: 100%;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Saves Lives +</h1>
+        <a id="create-alert-btn" href="/alertas">Criar Alerta</a>
+    </div>
+    <div id="map-container">
+        <div id="map"></div>
+        <div id="info-container">
+            <div id="tabs">
+                <div class="tab active" data-tab="info">Informações do Estado</div>
+                <div class="tab" data-tab="previsao">Previsão por Hora</div>
+                <div class="tab" data-tab="rotas">Rotas de Resgate</div>
+            </div>
+            <div id="info-content" class="tab-content active">
+                <h3>Informações do Estado</h3>
+                <p id="estado-nome">Clique em um estado para ver as informações.</p>
+                <p id="estado-temperatura"></p>
+                <p id="estado-clima"></p>
+                <p id="estado-umidade"></p>
+                <p id="estado-vento"></p>
+                <p id="estado-alerta"></p>
+            </div>
+            <div id="previsao-content" class="tab-content">
+                <h3>Previsão por Hora para <span id="previsao-estado-nome">Estado</span></h3>
+                <div id="estado-previsao" class="forecast-container"></div>
+            </div>
+            <div id="rotas-content" class="tab-content">
+                <h3>Rotas de Resgate</h3>
+                <ul id="lista-rotas"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const map = L.map('map').setView([-14.235, -51.9253], 4);
+            let selectedLayer = null;
+            let originalZoom = map.getZoom();
+            let originalCenter = map.getCenter();
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            const tabs = document.querySelectorAll(".tab");
+            const tabContents = document.querySelectorAll(".tab-content");
+
+            tabs.forEach(tab => {
+                tab.addEventListener("click", () => {
+                    tabs.forEach(t => t.classList.remove("active"));
+                    tabContents.forEach(content => content.classList.remove("active"));
+                    tab.classList.add("active");
+                    document.getElementById(`${tab.dataset.tab}-content`).classList.add("active");
+
+                    if (tab.dataset.tab !== 'rotas') {
+                        map.setView(originalCenter, originalZoom);
+                    }
+                });
+            });
+
+            fetch('/static/brazil-states.geojson')
+                .then(response => response.json())
+                .then(brazilStatesGeoJson => {
+                    const geoJsonLayer = L.geoJson(brazilStatesGeoJson, {
+                        style: function(feature) {
+                            return { color: "#555", weight: 1, fillColor: "#80c2af", fillOpacity: 0.7 };
+                        },
+                        onEachFeature: function (feature, layer) {
+                            layer.on('click', function () {
+                                if (selectedLayer) {
+                                    geoJsonLayer.resetStyle(selectedLayer);
+                                }
+                                layer.setStyle({ fillColor: "#4CAF50", fillOpacity: 0.9 });
+                                selectedLayer = layer;
+
+                                const estado = feature.properties.name;
+                                document.getElementById("previsao-estado-nome").textContent = estado;
+                                buscarDadosClimaticos(estado);
+                                buscarPrevisao(estado);
+                            });
+                        }
+                    }).addTo(map);
+                })
+                .catch(error => console.error("Erro ao carregar o GeoJSON:", error));
+
+            function carregarRotas() {
+                fetch("/rotas")
+                    .then(response => response.json())
+                    .then(data => {
+                        data.rotas.forEach(rota => {
+                            const polyline = L.polyline(
+                                rota.coordenadas.map(coord => [coord.latitude, coord.longitude]),
+                                { color: 'yellow', weight: 4, opacity: 0.7 }
+                            ).addTo(map);
+
+                            const rotaItem = document.createElement("li");
+                            rotaItem.textContent = rota.nome;
+                            rotaItem.style.cursor = 'pointer';
+
+                            rotaItem.addEventListener("click", () => {
+                                map.fitBounds(polyline.getBounds());
+                            });
+
+                            document.getElementById("lista-rotas").appendChild(rotaItem);
+                        });
+                    })
+                    .catch(error => console.error("Erro ao carregar rotas:", error));
+            }
+            
+            document.querySelector(".tab[data-tab='rotas']").addEventListener("click", carregarRotas);
+
+            function buscarDadosClimaticos(estado) {
+                fetch(`/clima/estado?estado=${estado}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById("estado-nome").textContent = `Estado: ${data.local}`;
+                        document.getElementById("estado-temperatura").textContent = `Temperatura: ${data.temperatura} °C`;
+                        document.getElementById("estado-clima").textContent = `Clima: ${data.clima}`;
+                        document.getElementById("estado-umidade").textContent = `Umidade: ${data.umidade}%`;
+                        document.getElementById("estado-vento").textContent = `Vento: ${data.vento} km/h`;
+                        document.getElementById("estado-alerta").innerHTML = data.alerta ? `<strong>Alerta:</strong> ${data.alerta}` : "Nenhum alerta ativo";
+                    })
+                    .catch(error => console.error("Erro ao obter dados do clima:", error));
+            }
+
+            function buscarPrevisao(estado) {
+                fetch(`/clima/estado/previsao?estado=${estado}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        let previsaoHtml = "";
+                        let currentDay = "";
+                        let dayCounter = -1;
+
+                        data.previsoes.forEach(previsao => {
+                            const [date, time] = previsao.data_hora.split(" ");
+                            const [ano, mes, dia] = date.split("-");
+                            const dataFormatada = `${dia}/${mes}/${ano}`;
+
+                            if (date !== currentDay) {
+                                currentDay = date;
+                                dayCounter++;
+                                previsaoHtml += `<div class="forecast-day day-${dayCounter % 5}">
+                                                    <strong>${dataFormatada}</strong>
+                                                 </div>`;
+                            }
+                            previsaoHtml += `<div class="forecast-item">
+                                                <strong>${time}</strong>:
+                                                <br>Temperatura: ${previsao.temperatura}°C
+                                                <br>Clima: ${previsao.clima}
+                                             </div>`;
+                        });
+
+                        document.getElementById("estado-previsao").innerHTML = previsaoHtml;
+                    })
+                    .catch(error => console.error("Erro ao obter dados da previsão:", error));
+            }
+        });
+    </script>
+</body>
+</html>

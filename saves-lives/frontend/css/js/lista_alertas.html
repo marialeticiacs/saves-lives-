@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Alertas - Saves Lives +</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .alerta {
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            margin: 10px 0;
+            width: 80%;
+            max-width: 500px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .alerta-info {
+            flex-grow: 1;
+        }
+        button {
+            padding: 8px 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button.inativo {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <h1>Lista de Alertas</h1>
+    <div id="alertas-container"></div>
+
+    <script>
+        async function carregarAlertas() {
+            try {
+                const response = await fetch("/alertas/lista");
+                const data = await response.json();
+
+                const alertasContainer = document.getElementById("alertas-container");
+                alertasContainer.innerHTML = '';
+
+                data.alertas.forEach(alerta => {
+                    const alertaDiv = document.createElement("div");
+                    alertaDiv.classList.add("alerta");
+
+                    const alertaInfo = document.createElement("div");
+                    alertaInfo.classList.add("alerta-info");
+                    alertaInfo.innerHTML = `
+                        <strong>Nome:</strong> ${alerta.nome}<br>
+                        <strong>Tipo:</strong> ${alerta.tipo}<br>
+                        <strong>Condição:</strong> ${alerta.condicao}<br>
+                        <strong>Estado:</strong> ${alerta.estado}
+                    `;
+
+                    const statusButton = document.createElement("button");
+                    statusButton.textContent = alerta.ativo ? "Desativar" : "Ativar";
+                    statusButton.classList.add(alerta.ativo ? "inativo" : "ativo");
+                    statusButton.onclick = () => alterarStatusAlerta(alerta._id, !alerta.ativo);
+
+                    alertaDiv.appendChild(alertaInfo);
+                    alertaDiv.appendChild(statusButton);
+
+                    alertasContainer.appendChild(alertaDiv);
+                });
+            } catch (error) {
+                console.error("Erro ao carregar alertas:", error);
+            }
+        }
+
+        async function alterarStatusAlerta(alertaId, novoStatus) {
+            try {
+                const response = await fetch(`/alertas/${alertaId}/status`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ ativo: novoStatus })
+                });
+                const data = await response.json();
+                alert(data.mensagem);
+                carregarAlertas();
+            } catch (error) {
+                console.error("Erro ao alterar status do alerta:", error);
+            }
+        }
+
+        // Carrega a lista de alertas ao carregar a página
+        document.addEventListener("DOMContentLoaded", carregarAlertas);
+    </script>
+</body>
+</html>

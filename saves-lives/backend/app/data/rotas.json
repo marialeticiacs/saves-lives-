@@ -1,0 +1,49 @@
+{
+    "rotas": [
+        {
+            "nome": "Rota 1 - Brasília",
+            "coordenadas": [
+                {"latitude": -15.7801, "longitude": -47.9292},
+                {"latitude": -15.7942, "longitude": -47.8822},
+                {"latitude": -15.8000, "longitude": -47.8750},
+                {"latitude": -15.8100, "longitude": -47.8500}
+            ]
+        },
+        {
+            "nome": "Rota 2 - São Paulo",
+            "coordenadas": [
+                {"latitude": -23.5505, "longitude": -46.6333},
+                {"latitude": -23.5605, "longitude": -46.6300},
+                {"latitude": -23.5655, "longitude": -46.6250},
+                {"latitude": -23.5700, "longitude": -46.6200}
+            ]
+        },
+        {
+            "nome": "Rota 3 - Rio de Janeiro",
+            "coordenadas": [
+                {"latitude": -22.9068, "longitude": -43.1729},
+                {"latitude": -22.9100, "longitude": -43.1800},
+                {"latitude": -22.9150, "longitude": -43.1850},
+                {"latitude": -22.9200, "longitude": -43.1900}
+            ]
+        },
+        {
+            "nome": "Rota 4 - Belo Horizonte",
+            "coordenadas": [
+                {"latitude": -19.9227, "longitude": -43.9451},
+                {"latitude": -19.9200, "longitude": -43.9400},
+                {"latitude": -19.9150, "longitude": -43.9350},
+                {"latitude": -19.9100, "longitude": -43.9300}
+            ]
+        },
+        {
+            "nome": "Rota 5 - Fortaleza",
+            "coordenadas": [
+                {"latitude": -3.7172, "longitude": -38.5433},
+                {"latitude": -3.7200, "longitude": -38.5500},
+                {"latitude": -3.7250, "longitude": -38.5550},
+                {"latitude": -3.7300, "longitude": -38.5600}
+            ]
+        }
+    ]
+}

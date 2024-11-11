@@ -1,0 +1,12 @@
+[
+    {
+        "tipo": "Temperatura alta",
+        "condicao": "acima de 30°C",
+        "ativo": true
+    },
+    {
+        "tipo": "Temperatura baixa",
+        "condicao": "abaixo de 18°C",
+        "ativo": true
+    }
+]

@@ -1,0 +1,7 @@
+import os
+
+@main.route('/')
+def index():
+    print(os.getcwd())  # Verifique o diretório de trabalho atual
+    return render_template('index.html')
+S

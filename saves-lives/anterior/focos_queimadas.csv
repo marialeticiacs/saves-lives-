@@ -1,0 +1,44 @@
+<html>
+<head><title>Movido para https</title>
+<style>
+  body{
+    background-color: #00796b;
+  }
+  div{
+    margin: auto;
+    width: fit-content;
+    height: fit-content;
+    display: block;
+    top: calc(10%);
+    position: relative;
+    background-color: #00796b;
+    color: white;
+    font-size: larger;
+  }
+  a{
+    color: #ffc262;
+  }
+  footer{
+    font-size: larger;
+    position: fixed;
+    bottom: 10px;
+    width: 100%;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div>
+    <h3>A plataforma TerraBrasilis foi atualizada para operar em HTTPS.</h3><br/>
+    O conteúdo que você está acessando foi movido pernamentemente para
+    <a href="https://terrabrasilis.dpi.inpe.br">https://terrabrasilis.dpi.inpe.br</a>.
+    <br/>
+    <br/>
+    Agradecemos o interesse.
+    <br/>
+    <br/>
+    Equipe TerraBrasilis
+  </div>
+  <footer><a href="https://terrabrasilis.dpi.inpe.br/">terrabrasilis.dpi.inpe.br</a></footer>
+</body>
+</html>
