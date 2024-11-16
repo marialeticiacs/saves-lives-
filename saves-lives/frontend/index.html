@@ -2,98 +2,291 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Saves Lives + - Mapa de Resgate Interativo</title>
+    <title>Saves Lives +</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <style>
         /* Estilos para o layout */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
             margin: 0;
             padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            background-color: #f4f4f4;
         }
+
         .header {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            width: 90%;
-            max-width: 1600px;
-            margin: 20px auto;
-        }
-        h1 {
-            color: #333;
-            font-size: 2.5em;
-        }
-        #create-alert-btn {
-            padding: 10px 20px;
-            background-color: #4CAF50;
+            align-items: center;
+            background-color: #00509E;
             color: white;
+            padding: 10px 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000; /* Garante que o cabeçalho fique acima do conteúdo */
+        }
+
+        .header h1 {
+            margin: 0;
+        }
+
+        #create-alert-btn {
+            background-color: #fff;
+            color: #D32F2F;
+            padding: 10px 15px;
             border: none;
             border-radius: 5px;
+            text-decoration: none;
             font-weight: bold;
             cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
         }
+
+        .header a {
+            background-color: #ffffff;
+            color: #D32F2F;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: 2px solid #D32F2F;
+        }
+
+        .header a:hover {
+            background-color: #D32F2F; /* Fundo vermelho quando passar o mouse */
+            color: white; /* Texto branco ao passar o mouse */
+        }
+
+        /* Estilos para as abas superiores */
+        .top-tabs {
+            display: flex;
+            justify-content: center;
+            background-color: #f1f1f1;
+            border-bottom: 1px solid #ddd;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        #tabs {
+            display: flex;
+            justify-content: center;
+            background-color: #fff;
+            border-bottom: 2px solid #ddd;
+            margin: 0;
+            padding: 0;
+        }
+
+        .top-tab {
+            /* flex: 1;
+            text-align: center;
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #f1f1f1;
+            font-weight: bold;
+            color: #333;
+            border: 1px solid #ddd;
+            transition: background-color 0.3s, color 0.3s; */
+            flex: 1;
+            text-align: center;
+            padding: 15px 10px;
+            cursor: pointer;
+            font-size: 1em;
+            color: #555;
+            border-bottom: 3px solid transparent;
+            transition: color 0.3s, border-bottom 0.3s;
+        }
+
+        .top-tab:hover, .top-tab.active {
+            /* background-color: #4A90E2;
+            color: white; */
+            color: #D32F2F;
+            border-bottom: 3px solid #D32F2F;
+            font-weight: bold;
+        }
+
+        .content {
+            display: none;
+            padding: 20px;
+        }
+
+        .content.active {
+            display: block;
+        }
+
         #map-container {
             display: flex;
             width: 95%;
             max-width: 1600px;
-            margin: 0 auto;
+            margin: 20px auto 0 auto;  /* Adiciona um margin-top para afastar do cabeçalho */
             background-color: #fff;
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             overflow: hidden;
-            height: 80vh;
+            height: 70vh; /* Reduz a altura do contêiner */
         }
+
         #map {
             height: 100%;
-            width: 65%;
+            width: 60%; /* Diminui a largura do mapa */
         }
+
         #info-container {
-            height: 100%;
-            width: 35%;
+            width: 40%; /* Ajusta a largura do contêiner de informações */
             padding: 20px;
-            background-color: #f9f9f9;
-            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            border-left: 3px solid #4CAF50;
+            background-color: white;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
             overflow-y: auto;
+            border-radius: 0 10px 10px 0;
         }
+
         #tabs {
             display: flex;
             justify-content: space-around;
             margin-bottom: 15px;
             cursor: pointer;
         }
+
         .tab {
-            font-size: 1.1em;
-            color: #555;
-            padding: 10px;
             flex: 1;
+            padding: 7px 14px;
             text-align: center;
-            border-bottom: 2px solid transparent;
-            transition: color 0.3s;
+            background-color: #f1f1f1;
+            border: 1px solid #ddd;
+            font-size: 0.9em;
+            color: #333;
+            cursor: pointer;
+            transition: background-color 0.3s;
         }
-        .tab.active {
-            color: #4CAF50;
-            border-bottom: 2px solid #4CAF50;
-            font-weight: bold;
+
+        .tab:hover, .tab.active {
+            background-color: #00509E;
+            color: white;
         }
+
         .tab-content {
             display: none;
+            margin-top: 20px;
         }
+
         .tab-content.active {
             display: block;
         }
+
         .forecast-container {
-            height: 100%;
+            max-height: 400px;
             overflow-y: auto;
+        }
+
+        .forecast-item {
+            margin-bottom: 10px;
+        }
+
+        /* Estrutura geral da página */
+        .page-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; /* Ocupa toda a altura da janela */
+        }
+
+        /* Área de conteúdo */
+        .content {
+            flex: 1; /* Faz o conteúdo ocupar o espaço disponível */
+            padding: 20px;
+        }
+
+        /* Rodapé */
+        .footer {
+            text-align: center;
+            padding: 10px 20px;
+            background-color: #f7f7f7;
+            color: #555;
+            font-family: 'Arial', sans-serif;
+            font-size: 0.9em;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .footer p {
+            margin: 5px 0;
+            font-style: italic;
+            color: #777;
+        }
+
+        .footer p:first-child {
+            font-size: 1em;
+            font-style: italic;
+            color: #555;
+        }
+
+        /* Estilo geral */
+        #result-tab {
+            padding: 40px 20px;
+            font-family: 'Arial', sans-serif;
+            color: #333;
+        }
+
+        /* Cabeçalho */
+        .result-header h2 {
+            font-size: 2.2em;
+            color: #00509E;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .result-header p {
+            font-size: 1.1em;
+            color: #555;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        /* Cartões */
+        .result-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            justify-content: center;
+            align-items: stretch;
+        }
+
+        .result-card {
+            background-color: #ffffff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s, transform 0.3s;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .result-card h3 {
+            font-size: 1.5em;
+            color: #00509E;
+            margin-bottom: 10px;
+        }
+
+        .result-card p {
+            font-size: 1em;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .result-header h2 {
+                font-size: 1.8em;
+            }
+
+            .result-card h3 {
+                font-size: 1.3em;
+            }
+
+            .result-card p {
+                font-size: 0.9em;
+            }
         }
     </style>
 </head>
@@ -102,62 +295,137 @@
         <h1>Saves Lives +</h1>
         <a id="create-alert-btn" href="/alertas/criar">Criar Alerta</a>
     </div>
-    <div id="map-container">
-        <div id="map"></div>
-        <div id="info-container">
-            <div id="tabs">
-                <div class="tab active" data-tab="info">Informações do Estado</div>
-                <div class="tab" data-tab="previsao">Previsão por Hora</div>
-                <div class="tab" data-tab="rotas">Rotas de Resgate</div>
+    <!-- Abas principais -->
+    <div class="top-tabs">
+        <div class="top-tab active" data-tab="home-tab">Home</div>
+        <div class="top-tab" data-tab="map-tab">Mapa Interativo</div>
+        <div class="top-tab" data-tab="result-tab">Resultados</div>
+    </div>
+
+    <div id="home-tab" class="content active" style="text-align: center; padding: 30px;">
+        <h2 style="font-size: 2.5em; color: #00509E; margin-bottom: 20px;">
+            Bem-vindo ao <span style="color: #D32F2F; font-weight: bold;">Saves Lives +</span>!
+        </h2>
+        <p style="font-size: 1.3em; color: #444; line-height: 1.6; margin-bottom: 30px;">
+            Sua plataforma para monitorar <span style="color: #4CAF50; font-weight: bold;">eventos climáticos</span>, 
+            gerenciar <span style="color: #D32F2F; font-weight: bold;">alertas críticos</span> 
+            e coordenar <span style="color: #FF9800; font-weight: bold;">operações de resgate</span> em tempo real.
+        </p>
+        <hr style="margin: 30px auto; width: 80%; border: 0; border-top: 2px solid #E0E0E0;">
+    
+        <!-- Centralizando os cards com flexbox -->
+        <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 30px;">
+            <!-- Card 1: Monitoramento Climático -->
+            <div style="background-color: #f4f4f4; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 280px;">
+                <div style="font-size: 2em; color: #4CAF50; margin-bottom: 15px;">🌩️</div>
+                <h3 style="color: #4CAF50; margin-bottom: 10px; font-size: 1.2em;">Monitoramento Climático</h3>
+                <p style="font-size: 1.1em; color: #444;">Acompanhe os eventos climáticos em tempo real, com dados atualizados constantemente para garantir que sua equipe esteja sempre informada.</p>
             </div>
-            <div id="info-content" class="tab-content active">
-                <h3>Informações do Estado</h3>
-                <p id="estado-nome">Clique em um estado para ver as informações.</p>
-                <p id="estado-temperatura"></p>
-                <p id="estado-clima"></p>
-                <p id="estado-umidade"></p>
-                <p id="estado-vento"></p>
-                <p id="estado-alerta"></p>
+            <!-- Card 2: Alertas Personalizados -->
+            <div style="background-color: #f4f4f4; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 280px;">
+                <div style="font-size: 2em; color: #D32F2F; margin-bottom: 15px;">⚠️</div>
+                <h3 style="color: #D32F2F; margin-bottom: 10px; font-size: 1.2em;">Alertas Personalizados</h3>
+                <p style="font-size: 1.1em; color: #444;">Crie alertas personalizados para situações críticas, com notificações em tempo real para ações imediatas da equipe.</p>
             </div>
-            <div id="previsao-content" class="tab-content">
-                <h3>Previsão por Hora para <span id="previsao-estado-nome">Estado</span></h3>
-                <div id="estado-previsao" class="forecast-container"></div>
+            <!-- Card 3: Gestão de Resgate -->
+            <div style="background-color: #f4f4f4; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 280px;">
+                <div style="font-size: 2em; color: #FF9800; margin-bottom: 15px;">🚑</div>
+                <h3 style="color: #FF9800; margin-bottom: 10px; font-size: 1.2em;">Gestão de Resgate</h3>
+                <p style="font-size: 1.1em; color: #444;">Otimize as operações de resgate com uma gestão inteligente, coordenando rotas de maneira eficiente para salvar vidas com rapidez.</p>
             </div>
-            <div id="rotas-content" class="tab-content">
-                <h3>Rotas de Resgate</h3>
-                <ul id="lista-rotas"></ul>
+        </div>
+    </div>  
+
+    <div id="map-tab" class="content">
+        <div id="map-container">
+            <div id="map"></div>
+            <div id="info-container">
+                <div id="tabs">
+                    <div class="tab active" data-tab="info">Informações do Estado</div>
+                    <div class="tab" data-tab="previsao">Previsão por Hora</div>
+                    <div class="tab" data-tab="rotas">Rotas de Resgate</div>
+                </div>
+                <div id="info-content" class="tab-content active">
+                    <h3>Informações do Estado</h3>
+                    <p id="estado-nome">Clique em um estado para ver as informações.</p>
+                    <p id="estado-temperatura"></p>
+                    <p id="estado-clima"></p>
+                    <p id="estado-umidade"></p>
+                    <p id="estado-vento"></p>
+                    <p id="estado-alerta"></p>
+                </div>
+                <div id="previsao-content" class="tab-content">
+                    <h3>Previsão por Hora para <span id="previsao-estado-nome">Estado</span></h3>
+                    <div id="estado-previsao" class="forecast-container"></div>
+                </div>
+                <div id="rotas-content" class="tab-content">
+                    <h3>Rotas de Resgate</h3>
+                    <ul id="lista-rotas"></ul>
+                </div>
             </div>
         </div>
     </div>
 
+    <div id="result-tab" class="content">
+        <div class="result-header">
+            <h2>Resultados Recentes</h2>
+            <p>Acompanhe os dados e relatórios mais recentes sobre condições climáticas e operações realizadas.</p>
+        </div>
+        <div class="result-cards">
+            <div class="result-card">
+                <h3>Monitoramento Climático</h3>
+                <p>Gráficos interativos e relatórios atualizados com informações detalhadas das condições meteorológicas em áreas críticas.</p>
+            </div>
+            <div class="result-card">
+                <h3>Alertas Críticos</h3>
+                <p>Notificações recentes de situações de emergência, incluindo tempo de resposta médio e áreas mais afetadas.</p>
+            </div>
+            <div class="result-card">
+                <h3>Operações de Resgate</h3>
+                <p>Relatórios detalhados sobre operações de resgate realizadas, incluindo rotas otimizadas e recursos mobilizados.</p>
+            </div>
+            <div class="result-card">
+                <h3>Análise de Dados Climáticos</h3>
+                <p>Comparação de padrões climáticos com base em análises históricas e previsões futuras para 2024.</p>
+            </div>
+            <div class="result-card">
+                <h3>Resumo Semanal</h3>
+                <p>Um panorama consolidado dos eventos climáticos mais importantes e ações realizadas nos últimos 7 dias.</p>
+            </div>
+            <div class="result-card">
+                <h3>Impacto Operacional</h3>
+                <p>Estatísticas e insights sobre como nossas operações estão salvando vidas e minimizando danos em áreas críticas.</p>
+            </div>
+        </div>
+    </div>    
+
+    <footer class="footer">
+        <p>“Nossa missão é salvar vidas com tecnologia e inovação.”</p>
+        <p>© 2024 Saves Lives +. Todos os direitos reservados.</p>
+    </footer>
+
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const map = L.map('map').setView([-14.235, -51.9253], 4);
-            let selectedLayer = null;
-            let originalZoom = map.getZoom();
-            let originalCenter = map.getCenter();
+         document.addEventListener("DOMContentLoaded", function () {
+        let map;
+        let selectedLayer = null;
+        let originalZoom;
+        let originalCenter;
+
+        // Função para inicializar o mapa
+        function initializeMap() {
+            // Verifica se o mapa já foi inicializado
+            if (map) return;
+
+            map = L.map('map').setView([-14.235, -51.9253], 4);
+            originalZoom = map.getZoom();
+            originalCenter = map.getCenter();
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '© OpenStreetMap contributors'
             }).addTo(map);
 
-            const tabs = document.querySelectorAll(".tab");
-            const tabContents = document.querySelectorAll(".tab-content");
-
-            tabs.forEach(tab => {
-                tab.addEventListener("click", () => {
-                    tabs.forEach(t => t.classList.remove("active"));
-                    tabContents.forEach(content => content.classList.remove("active"));
-                    tab.classList.add("active");
-                    document.getElementById(`${tab.dataset.tab}-content`).classList.add("active");
-
-                    if (tab.dataset.tab !== 'rotas') {
-                        map.setView(originalCenter, originalZoom);
-                    }
-                });
-            });
-
+            // Carrega o GeoJSON
             fetch('/static/brazil-states.geojson')
                 .then(response => response.json())
                 .then(brazilStatesGeoJson => {
@@ -182,7 +450,45 @@
                     }).addTo(map);
                 })
                 .catch(error => console.error("Erro ao carregar o GeoJSON:", error));
+        }
 
+        // Alternar entre abas internas (Informações, Previsão, Rotas)
+        const tabs = document.querySelectorAll(".tab");
+        const tabContents = document.querySelectorAll(".tab-content");
+
+        tabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                tabs.forEach(t => t.classList.remove("active"));
+                tabContents.forEach(content => content.classList.remove("active"));
+                tab.classList.add("active");
+                document.getElementById(`${tab.dataset.tab}-content`).classList.add("active");
+
+                // Se a aba ativa não for "rotas", restaura a posição do mapa
+                if (tab.dataset.tab !== 'rotas') {
+                    map.setView(originalCenter, originalZoom);
+                }
+            });
+        });
+
+        // Alternar entre abas principais (Home, Mapa, Resultados)
+        const topTabs = document.querySelectorAll(".top-tab");
+        const topContents = document.querySelectorAll(".content");
+
+        topTabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                topTabs.forEach(t => t.classList.remove("active"));
+                topContents.forEach(c => c.classList.remove("active"));
+                tab.classList.add("active");
+                const activeContent = document.getElementById(tab.dataset.tab);
+                activeContent.classList.add("active");
+
+                // Se a aba ativa for "map-tab", inicializa o mapa
+                if (tab.dataset.tab === "map-tab") {
+                    initializeMap();  // Chama a função para inicializar o mapa
+                    map.setView(originalCenter, originalZoom);  // Restaura a visão original do mapa
+                }
+            });
+        });
             function carregarRotas() {
                 fetch("/rotas")
                     .then(response => response.json())

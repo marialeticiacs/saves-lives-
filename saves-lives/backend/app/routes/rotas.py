@@ -5,7 +5,7 @@ import os
 router = APIRouter()
 
 # Caminho para o arquivo de rotas
-ROTAS_FILE = "C:/Users/luyza/saves-lives/saves-lives/backend/app/data/rotas.json"
+ROTAS_FILE = "C:/MariaLetícia/saves-lives-plus/saves-lives/backend/app/data/rotas.json"
 
 # Função para carregar as rotas do arquivo JSON
 def carregar_rotas():

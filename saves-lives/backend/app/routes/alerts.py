@@ -20,6 +20,13 @@ client = MongoClient(MONGODB_URI)
 db = client['saves_lives_db']  
 alertas_collection = db['alertas'] 
 
+client = MongoClient(
+    MONGODB_URI,
+    tls=True,  # Ativa o TLS/SSL
+    tlsAllowInvalidCertificates=False  # Certifica-se de que certificados inválidos são rejeitados
+)
+
+
 router = APIRouter()
 
 def alerta_to_dict(alerta):
@@ -30,7 +37,7 @@ def alerta_to_dict(alerta):
 # Rota para exibir a página de criação de alertas
 @router.get("/criar", response_class=HTMLResponse)
 async def alertas_page():
-    file_path = "C:/Users/luyza/saves-lives/saves-lives/frontend/css/js/alertas.html" #não esquecer de mudar para o seu caminho
+    file_path = "C:/MariaLetícia/saves-lives-plus/saves-lives/frontend/css/js/alertas.html" #não esquecer de mudar para o seu caminho
     with open(file_path, "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 
