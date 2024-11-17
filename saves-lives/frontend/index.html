@@ -288,6 +288,71 @@
                 font-size: 0.9em;
             }
         }
+
+        .forecast-day {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .forecast-header {
+            background-color: #4caf50;
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .forecast-items {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            padding: 10px;
+        }
+
+        .forecast-item {
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            width: 30%;
+            margin: 10px 0;
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .forecast-item .time {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+
+        .forecast-item .details {
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .forecast-item .temperature {
+            font-size: 1.1em;
+            color: #f44336;
+        }
+
+        .forecast-item .weather {
+            font-size: 1em;
+            color: #2196f3;
+        }
+
+        #estado-alerta {
+            font-weight: bold;
+            color: #d32f2f;
+        }
+
+        #estado-alerta:empty {
+            color: #388e3c;
+        }
     </style>
 </head>
 <body>
@@ -355,7 +420,7 @@
                     <p id="estado-alerta"></p>
                 </div>
                 <div id="previsao-content" class="tab-content">
-                    <h3>Previsão por Hora para <span id="previsao-estado-nome">Estado</span></h3>
+                    <h3>Previsão do Tempo para <span id="previsao-estado-nome">Estado</span></h3>
                     <div id="estado-previsao" class="forecast-container"></div>
                 </div>
                 <div id="rotas-content" class="tab-content">
@@ -519,12 +584,14 @@
                 fetch(`/clima/estado?estado=${estado}`)
                     .then(response => response.json())
                     .then(data => {
-                        document.getElementById("estado-nome").textContent = `Estado: ${data.local}`;
-                        document.getElementById("estado-temperatura").textContent = `Temperatura: ${data.temperatura} °C`;
-                        document.getElementById("estado-clima").textContent = `Clima: ${data.clima}`;
-                        document.getElementById("estado-umidade").textContent = `Umidade: ${data.umidade}%`;
-                        document.getElementById("estado-vento").textContent = `Vento: ${data.vento} km/h`;
-                        document.getElementById("estado-alerta").innerHTML = data.alerta ? `<strong>Alerta:</strong> ${data.alerta}` : "Nenhum alerta ativo";
+                        document.getElementById("estado-nome").innerHTML = `📍 <strong>Estado:</strong> ${data.local}`;
+                        document.getElementById("estado-temperatura").innerHTML = `🌡️ <strong>Temperatura:</strong> ${data.temperatura} °C`;
+                        document.getElementById("estado-clima").innerHTML = `☁️ <strong>Clima:</strong> ${data.clima}`;
+                        document.getElementById("estado-umidade").innerHTML = `💧 <strong>Umidade:</strong> ${data.umidade}%`;
+                        document.getElementById("estado-vento").innerHTML = `🌬️ <strong>Vento:</strong> ${data.vento} km/h`;
+                        document.getElementById("estado-alerta").innerHTML = data.alerta 
+                            ? `<strong>⚠️ Alerta:</strong> ${data.alerta}` 
+                            : "✅ Nenhum alerta ativo";
                     })
                     .catch(error => console.error("Erro ao obter dados do clima:", error));
             }
@@ -542,19 +609,40 @@
                             const [ano, mes, dia] = date.split("-");
                             const dataFormatada = `${dia}/${mes}/${ano}`;
 
+                            // Quando mudar o dia, inicia uma nova seção
                             if (date !== currentDay) {
                                 currentDay = date;
                                 dayCounter++;
-                                previsaoHtml += `<div class="forecast-day day-${dayCounter % 5}">
-                                                    <strong>${dataFormatada}</strong>
-                                                 </div>`;
+
+                                // Fechar o bloco anterior (exceto o primeiro)
+                                if (dayCounter > 0) {
+                                    previsaoHtml += `</div></div>`;
+                                }
+
+                                // Inicia um novo bloco para o dia
+                                previsaoHtml += `
+                                    <div class="forecast-day day-${dayCounter % 5}">
+                                        <div class="forecast-header">
+                                            <h3>${dataFormatada}</h3>
+                                        </div>
+                                        <div class="forecast-items">
+                                `;
                             }
-                            previsaoHtml += `<div class="forecast-item">
-                                                <strong>${time}</strong>:
-                                                <br>Temperatura: ${previsao.temperatura}°C
-                                                <br>Clima: ${previsao.clima}
-                                             </div>`;
+
+                            // Adiciona as previsões do dia
+                            previsaoHtml += `
+                                <div class="forecast-item">
+                                    <div class="time">${time}</div>
+                                    <div class="details">
+                                        <div class="temperature">🌡️ ${previsao.temperatura}°C</div>
+                                        <div class="weather">☁️ ${previsao.clima}</div>
+                                    </div>
+                                </div>
+                            `;
                         });
+
+                        // Fecha o último bloco
+                        previsaoHtml += `</div></div>`;
 
                         document.getElementById("estado-previsao").innerHTML = previsaoHtml;
                     })
