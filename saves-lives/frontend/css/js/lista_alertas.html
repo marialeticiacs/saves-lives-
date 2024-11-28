@@ -49,60 +49,73 @@
     <div id="alertas-container"></div>
 
     <script>
-        async function carregarAlertas() {
-            try {
-                const response = await fetch("/alertas/lista");
-                const data = await response.json();
+async function carregarAlertas() {
+    try {
+        const response = await fetch("/alertas/lista");
+        const data = await response.json();
+        const alertasContainer = document.getElementById("alertas-container");
+        alertasContainer.innerHTML = "";
 
-                const alertasContainer = document.getElementById("alertas-container");
-                alertasContainer.innerHTML = '';
+        data.alertas.forEach(alerta => {
+            const alertaDiv = document.createElement("div");
+            alertaDiv.className = "alerta";
+            alertaDiv.innerHTML = `
+                <p><strong>Nome:</strong> ${alerta.nome}</p>
+                <p><strong>Tipo:</strong> ${alerta.tipo}</p>
+                <p><strong>Condição:</strong> ${alerta.condicao || "N/A"}</p>
+                <p><strong>Estado:</strong> ${alerta.estado}</p>
+                <p><strong>Status:</strong> ${alerta.ativo ? "Ativo" : "Inativo"}</p>
+                <button onclick="alterarStatus(${alerta.id}, ${!alerta.ativo})">
+                    ${alerta.ativo ? "Desativar" : "Ativar"}
+                </button>
+                <button onclick="deletarAlerta(${alerta.id})" style="background-color: #d9534f; color: white; margin-left: 5px;">
+                    Apagar
+                </button>
+            `;
+            alertasContainer.appendChild(alertaDiv);
+        });
+    } catch (error) {
+        console.error("Erro ao carregar alertas:", error);
+    }
+}
 
-                data.alertas.forEach(alerta => {
-                    const alertaDiv = document.createElement("div");
-                    alertaDiv.classList.add("alerta");
+async function alterarStatus(alertaId, novoStatus) {
+    try {
+        const response = await fetch(`/alertas/${alertaId}/status`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ativo: novoStatus })
+        });
 
-                    const alertaInfo = document.createElement("div");
-                    alertaInfo.classList.add("alerta-info");
-                    alertaInfo.innerHTML = `
-                        <strong>Nome:</strong> ${alerta.nome}<br>
-                        <strong>Tipo:</strong> ${alerta.tipo}<br>
-                        <strong>Condição:</strong> ${alerta.condicao}<br>
-                        <strong>Estado:</strong> ${alerta.estado}
-                    `;
-
-                    const statusButton = document.createElement("button");
-                    statusButton.textContent = alerta.ativo ? "Desativar" : "Ativar";
-                    statusButton.classList.add(alerta.ativo ? "inativo" : "ativo");
-                    statusButton.onclick = () => alterarStatusAlerta(alerta._id, !alerta.ativo);
-
-                    alertaDiv.appendChild(alertaInfo);
-                    alertaDiv.appendChild(statusButton);
-
-                    alertasContainer.appendChild(alertaDiv);
-                });
-            } catch (error) {
-                console.error("Erro ao carregar alertas:", error);
-            }
+        if (response.ok) {
+            alert("Status do alerta alterado com sucesso!");
+            carregarAlertas(); 
+        } else {
+            alert("Erro ao alterar o status do alerta.");
         }
+    } catch (error) {
+        console.error("Erro ao alterar status:", error);
+    }
+}
 
-        async function alterarStatusAlerta(alertaId, novoStatus) {
-            try {
-                const response = await fetch(`/alertas/${alertaId}/status`, {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ ativo: novoStatus })
-                });
-                const data = await response.json();
-                alert(data.mensagem);
-                carregarAlertas();
-            } catch (error) {
-                console.error("Erro ao alterar status do alerta:", error);
-            }
+async function deletarAlerta(alertaId) {
+    if (!confirm("Tem certeza que deseja apagar este alerta?")) return;
+
+    try {
+        const response = await fetch(`/alertas/${alertaId}`, {
+            method: "DELETE",
+        });
+
+        if (response.ok) {
+            alert("Alerta apagado com sucesso!");
+            carregarAlertas(); 
+        } else {
+            alert("Erro ao apagar o alerta.");
         }
-
-        // Carrega a lista de alertas ao carregar a página
+    } catch (error) {
+        console.error("Erro ao apagar alerta:", error);
+    }
+}
         document.addEventListener("DOMContentLoaded", carregarAlertas);
     </script>
 </body>

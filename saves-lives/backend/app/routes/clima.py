@@ -1,13 +1,42 @@
 from fastapi import APIRouter, Query, HTTPException
+from typing import Optional
 import requests
-import os
-
+import sqlite3 
 router = APIRouter()
 
-# Chave e URL da API de clima
 OWM_API_KEY = "7448e6299383b00ae5d0ce6dd4df2627"
 OWM_API_URL = "https://api.openweathermap.org/data/2.5/weather"
-PREVISAO_API_URL = "https://api.openweathermap.org/data/2.5/forecast"
+
+def buscar_alertas_personalizados(estado: str, data_climatica: dict) -> list:
+    conn = sqlite3.connect("C:/Users/luyza/PI6/saves-lives-plus/saves-lives/backend/app/alertas.db")
+    cursor = conn.cursor()
+
+    # Busca alertas ativos
+    cursor.execute("""
+        SELECT nome, tipo, condicao
+        FROM alertas
+        WHERE (estado = ? OR estado = 'Todos') AND ativo = 1
+    """, (estado,))
+    alertas = cursor.fetchall()
+    conn.close()
+
+    alertas_filtrados = []
+
+    for nome, tipo, condicao in alertas:
+        if condicao:
+            try:
+                condicao = float(condicao.replace("°C", "").strip())
+            except ValueError:
+                condicao = None
+
+        if tipo == "Temperatura alta" and condicao and float(data_climatica["main"]["temp"]) > condicao:
+            alertas_filtrados.append(f"{nome} (Temperatura > {condicao}°C)")
+        elif tipo == "Temperatura baixa" and condicao and float(data_climatica["main"]["temp"]) < condicao:
+            alertas_filtrados.append(f"{nome} (Temperatura < {condicao}°C)")
+        elif tipo == "Chuva intensa" and "rain" in data_climatica and data_climatica["rain"].get("1h", 0) > float(condicao or 10):
+            alertas_filtrados.append(f"{nome} (Chuva intensa)")
+
+    return alertas_filtrados
 
 @router.get("/estado")
 async def clima_estado(estado: str = Query(...)):
@@ -21,15 +50,7 @@ async def clima_estado(estado: str = Query(...)):
     data = response.json()
 
     if response.status_code == 200:
-        alerta = None
-        if data["main"]["temp"] > 35:
-            alerta = "Alerta de Calor Extremo"
-        elif data["main"]["temp"] < 5:
-            alerta = "Alerta de Frio Intenso"
-        if "rain" in data and data["rain"].get("1h", 0) > 10:
-            alerta = "Alerta de Chuva Intensa"
-        if "wind" in data and data["wind"]["speed"] > 50:
-            alerta = "Alerta de Vento Forte"
+        alertas = buscar_alertas_personalizados(estado, data)
 
         return {
             "local": data["name"],
@@ -37,33 +58,32 @@ async def clima_estado(estado: str = Query(...)):
             "clima": data["weather"][0]["description"],
             "umidade": data["main"]["humidity"],
             "vento": data["wind"]["speed"],
-            "alerta": alerta or "Nenhum alerta ativo"
+            "alerta": alertas if alertas else ["Nenhum alerta ativo"]
         }
     else:
-        return {"erro": "Não foi possível obter os dados climáticos"}
+        raise HTTPException(status_code=500, detail="Não foi possível obter os dados climáticos")
 
 @router.get("/estado/previsao")
-async def previsao_estado(estado: str = Query(...)):
+async def previsao_estado(estado: str):
+    OWM_API_URL_FORECAST = "https://api.openweathermap.org/data/2.5/forecast"
     params = {
         "q": estado + ",BR",
         "appid": OWM_API_KEY,
         "units": "metric",
         "lang": "pt"
     }
-    response = requests.get(PREVISAO_API_URL, params=params)
-    data = response.json()
-
+    response = requests.get(OWM_API_URL_FORECAST, params=params)
     if response.status_code == 200:
+        data = response.json()
         previsoes = [
             {
-                "data_hora": previsao["dt_txt"],
-                "temperatura": previsao["main"]["temp"],
-                "clima": previsao["weather"][0]["description"],
-                "umidade": previsao["main"]["humidity"],
-                "vento": previsao["wind"]["speed"]
+                "data_hora": item["dt_txt"],
+                "temperatura": item["main"]["temp"],
+                "clima": item["weather"][0]["description"]
             }
-            for previsao in data["list"]
+            for item in data["list"]
         ]
-        return {"previsoes": previsoes[:40]}
+        return {"previsoes": previsoes}
     else:
-        return {"erro": "Não foi possível obter os dados de previsão"}
+        return {"erro": "Não foi possível obter a previsão do tempo"}
+

@@ -5,212 +5,318 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configurar Alertas</title>
     <style>
-        /* Estilo Geral */
         body {
             font-family: Arial, sans-serif;
             background-color: #f2f2f2;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background-color: #00509E;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            background-color: #f4f4f4;
+            justify-content: center;
+            border-bottom: 2px solid #ccc;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .tab.active {
+            border-bottom: 3px solid #00509E;
+            color: #00509E;
+        }
+
+        .content {
+            display: none;
+            padding: 20px;
+        }
+
+        .content.active {
+            display: block;
         }
 
         .container {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-            width: 100%;
-            max-width: 400px;
+            max-width: 600px;
+            margin: auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
         }
 
-        h1 {
-            text-align: center;
-            font-size: 24px;
-            color: #333;
-            margin-bottom: 20px;
-        }
-
-        /* Botões Voltar e Ver Alertas */
-        .button-group {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .button-group button {
-            flex: 1;
-            padding: 10px;
-            font-weight: bold;
-            border: none;
-            border-radius: 5px;
-            color: #fff;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .btn-blue {
-            background-color: #4A90E2;
-            margin-right: 10px;
-        }
-
-        .btn-blue:hover {
-            background-color: #00509E;
-        }
-
-        .btn-green {
-            background-color: #ff4d4d;
-            margin-left: 10px;
-        }
-
-        .btn-green:hover {
-            background-color: #e60000;
-        }
-
-        /* Formulário */
         form {
             display: flex;
             flex-direction: column;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
+            gap: 15px;
         }
 
         label {
             font-size: 14px;
             color: #333;
-            margin-bottom: 5px;
-            display: block;
         }
 
-        input[type="text"],
-        select {
-            width: 100%;
+        input, select {
             padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
             font-size: 14px;
-            box-sizing: border-box; /* Garante alinhamento consistente */
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
 
-        input[type="text"]:focus,
-        select:focus {
-            border-color: #28a745;
-            outline: none;
-        }
-
-        /* Estilo para o grupo de condição */
-        .condition-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        .condition-group select,
-        .condition-group input[type="text"] {
-            flex: 1;
-        }
-
-        /* Botão Salvar */
-        .btn-save {
+        button {
+            padding: 10px 15px;
             background-color: #28a745;
-            color: #fff;
+            color: white;
             border: none;
-            padding: 10px;
-            font-size: 16px;
-            font-weight: bold;
             border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s;
         }
 
-        .btn-save:hover {
+        button:hover {
             background-color: #218838;
+        }
+
+        .alerta {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        .alerta button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .alerta button:hover {
+            background-color: #d32f2f;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Cadastrar Alerta</h1>
+    <div class="header">Configurar Alertas</div>
 
-        <!-- Botões de Navegação -->
-        <div class="button-group">
-            <button class="btn-blue" onclick="window.location.href='/'">Voltar</button>
-            <button class="btn-green" onclick="window.location.href='/alertas/lista'">Ver Alertas</button>
-        </div>
+    
+    <div class="tabs">
+        <div class="tab active" data-tab="cadastrar-alerta">Cadastrar Alerta</div>
+        <div class="tab" data-tab="ver-alertas">Ver Alertas</div>
+    </div>
 
-        <!-- Formulário -->
-        <form>
-            <div class="form-group">
+    <button class="back-button" onclick="window.location.href='/'">
+        Voltar
+    </button>
+
+    <div id="cadastrar-alerta" class="content active">
+        <div class="container">
+            <h2>Cadastrar Alerta</h2>
+            <form id="form-alerta">
                 <label for="alerta-nome">Nome do Alerta</label>
-                <input type="text" id="alerta-nome" placeholder="Ex: Alerta de Temperatura Alta">
-            </div>
+                <input type="text" id="alerta-nome" required>
 
-            <div class="form-group">
                 <label for="alerta-tipo">Tipo de Alerta</label>
                 <select id="alerta-tipo">
                     <option value="Temperatura alta">Temperatura alta</option>
                     <option value="Temperatura baixa">Temperatura baixa</option>
                     <option value="Chuva intensa">Chuva intensa</option>
                 </select>
-            </div>
 
-            <div class="form-group">
-                <label for="condicao-seletor">Condição</label>
-                <div class="condition-group">
-                    <select id="condicao-seletor">
-                        <option value="acima">Acima de</option>
-                        <option value="abaixo">Abaixo de</option>
-                    </select>
-                    <input type="text" id="alerta-condicao" placeholder="Digite o valor (ex: 30°C)">
-                </div>
-            </div>
+                <label id="condicao-label" for="alerta-condicao">Condição</label>
+                <input type="text" id="alerta-condicao">
 
-            <div class="form-group">
                 <label for="estado">Estado</label>
                 <select id="estado">
                     <option value="Todos">Todos os Estados</option>
-                    <option value="AC">Acre</option>
-                    <option value="AL">Alagoas</option>
-                    <option value="AP">Amapá</option>
-                    <option value="AM">Amazonas</option>
-                    <option value="BA">Bahia</option>
-                    <option value="CE">Ceará</option>
-                    <option value="DF">Distrito Federal</option>
-                    <option value="ES">Espírito Santo</option>
-                    <option value="GO">Goiás</option>
-                    <option value="MA">Maranhão</option>
-                    <option value="MT">Mato Grosso</option>
-                    <option value="MS">Mato Grosso do Sul</option>
-                    <option value="MG">Minas Gerais</option>
-                    <option value="PA">Pará</option>
-                    <option value="PB">Paraíba</option>
-                    <option value="PR">Paraná</option>
-                    <option value="PE">Pernambuco</option>
-                    <option value="PI">Piauí</option>
-                    <option value="RJ">Rio de Janeiro</option>
-                    <option value="RN">Rio Grande do Norte</option>
-                    <option value="RS">Rio Grande do Sul</option>
-                    <option value="RO">Rondônia</option>
-                    <option value="RR">Roraima</option>
-                    <option value="SC">Santa Catarina</option>
-                    <option value="SP">São Paulo</option>
-                    <option value="SE">Sergipe</option>
-                    <option value="TO">Tocantins</option>
+                    <option value="Acre">Acre</option>
+                    <option value="Alagoas">Alagoas</option>
+                    <option value="Amapá">Amapá</option>
+                    <option value="Amazonas">Amazonas</option>
+                    <option value="Bahia">Bahia</option>
+                    <option value="Ceará">Ceará</option>
+                    <option value="Distrito Federal">Distrito Federal</option>
+                    <option value="Espírito Santo">Espírito Santo</option>
+                    <option value="Goiás">Goiás</option>
+                    <option value="Maranhão">Maranhão</option>
+                    <option value="Mato Grosso">Mato Grosso</option>
+                    <option value="Mato Grosso do Sul">Mato Grosso do Sul</option>
+                    <option value="Minas Gerais">Minas Gerais</option>
+                    <option value="Pará">Pará</option>
+                    <option value="Paraíba">Paraíba</option>
+                    <option value="Paraná">Paraná</option>
+                    <option value="Pernambuco">Pernambuco</option>
+                    <option value="Piauí">Piauí</option>
+                    <option value="Rio de Janeiro">Rio de Janeiro</option>
+                    <option value="Rio Grande do Norte">Rio Grande do Norte</option>
+                    <option value="Rio Grande do Sul">Rio Grande do Sul</option>
+                    <option value="Rondônia">Rondônia</option>
+                    <option value="Roraima">Roraima</option>
+                    <option value="Santa Catarina">Santa Catarina</option>
+                    <option value="São Paulo">São Paulo</option>
+                    <option value="Sergipe">Sergipe</option>
+                    <option value="Tocantins">Tocantins</option>
                 </select>
-            </div>
-
-            <div class="form-group">
+                
                 <label for="alerta-ativo">Status</label>
                 <select id="alerta-ativo">
-                    <option value="ativo">Ativo</option>
-                    <option value="inativo">Inativo</option>
+                    <option value="true">Ativo</option>
+                    <option value="false">Inativo</option>
                 </select>
-            </div>
 
-            <button class="btn-save" type="submit">Salvar Alerta</button>
-        </form>
+                <button type="submit">Salvar Alerta</button>
+            </form>
+        </div>
     </div>
+
+    <div id="ver-alertas" class="content">
+        <div class="container">
+            <h2>Lista de Alertas</h2>
+            <div id="alertas-container"></div>
+        </div>
+    </div>
+    <script>
+        document.querySelectorAll(".tab").forEach(tab => {
+            tab.addEventListener("click", () => {
+                document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+                document.querySelectorAll(".content").forEach(c => c.classList.remove("active"));
+                tab.classList.add("active");
+                document.getElementById(tab.dataset.tab).classList.add("active");
+            });
+        });
+    
+        document.getElementById("alerta-tipo").addEventListener("change", function () {
+            const condicaoLabel = document.getElementById("condicao-label");
+            const condicaoInput = document.getElementById("alerta-condicao");
+            if (this.value === "Chuva intensa") {
+                condicaoLabel.style.display = "none";
+                condicaoInput.style.display = "none";
+            } else {
+                condicaoLabel.style.display = "block";
+                condicaoInput.style.display = "block";
+            }
+        });
+    
+        document.getElementById("form-alerta").addEventListener("submit", async function (event) {
+            event.preventDefault();
+    
+            const nome = document.getElementById("alerta-nome").value;
+            const tipo = document.getElementById("alerta-tipo").value;
+            const condicao = document.getElementById("alerta-condicao").value || null;
+            const estado = document.getElementById("estado").value;
+            const ativo = document.getElementById("alerta-ativo").value === "true";
+    
+            const alerta = {
+                nome,
+                tipo,
+                condicao: tipo === "Chuva intensa" ? null : condicao, 
+                estado,
+                ativo
+            };
+    
+            try {
+                const response = await fetch("/alertas", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(alerta)
+                });
+                if (response.ok) {
+                    alert("Alerta criado com sucesso!");
+                    carregarAlertas();
+                    document.querySelector('.tab[data-tab="ver-alertas"]').click();
+                } else {
+                    alert("Erro ao salvar o alerta.");
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        });
+    
+        async function carregarAlertas() {
+            try {
+                const response = await fetch("/alertas/lista");
+                const data = await response.json();    
+                const alertasContainer = document.getElementById("alertas-container");
+            alertasContainer.innerHTML = "";
+
+            data.alertas.forEach(alerta => {
+                const alertaDiv = document.createElement("div");
+                alertaDiv.className = "alerta";
+                alertaDiv.innerHTML = `
+                    <p><strong>Nome:</strong> ${alerta.nome}</p>
+                    <p><strong>Tipo:</strong> ${alerta.tipo}</p>
+                    <p><strong>Condição:</strong> ${alerta.condicao ? alerta.condicao : "Não aplicável"}</p>
+                    <p><strong>Estado:</strong> ${alerta.estado}</p>
+                    <p><strong>Status:</strong> ${alerta.ativo ? "Ativo" : "Inativo"}</p>
+                    <button onclick="alterarStatus(${alerta.id}, ${!alerta.ativo})">
+                        ${alerta.ativo ? "Desativar" : "Ativar"}
+                    </button>
+                    <button onclick="deletarAlerta(${alerta.id})" style="margin-left: 10px; background-color: #007BFF;">
+                        Apagar
+                    </button>
+                `;
+                alertasContainer.appendChild(alertaDiv);
+            });
+        } catch (error) {
+            console.error("Erro ao carregar alertas:", error);
+        }
+    }
+
+    async function alterarStatus(alertaId, novoStatus) {
+        try {
+            const response = await fetch(`/alertas/${alertaId}/status`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ativo: novoStatus })
+            });
+
+            if (response.ok) {
+                alert("Status do alerta alterado com sucesso!");
+                carregarAlertas(); 
+            } else {
+                alert("Erro ao alterar o status do alerta.");
+            }
+        } catch (error) {
+            console.error("Erro ao alterar status:", error);
+        }
+    }
+
+    async function deletarAlerta(alertaId) {
+        try {
+            const response = await fetch(`/alertas/${alertaId}`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" }
+            });
+
+            if (response.ok) {
+                alert("Alerta apagado com sucesso!");
+                carregarAlertas(); 
+            } else {
+                alert("Erro ao apagar o alerta.");
+            }
+        } catch (error) {
+            console.error("Erro ao apagar alerta:", error);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", carregarAlertas);
+</script>
 </body>
 </html>

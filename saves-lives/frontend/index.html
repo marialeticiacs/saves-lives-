@@ -471,6 +471,7 @@
 
     <script>
          document.addEventListener("DOMContentLoaded", function () {
+        
         let map;
         let selectedLayer = null;
         let originalZoom;
@@ -478,7 +479,6 @@
 
         // Função para inicializar o mapa
         function initializeMap() {
-            // Verifica se o mapa já foi inicializado
             if (map) return;
 
             map = L.map('map').setView([-14.235, -51.9253], 4);
@@ -517,7 +517,6 @@
                 .catch(error => console.error("Erro ao carregar o GeoJSON:", error));
         }
 
-        // Alternar entre abas internas (Informações, Previsão, Rotas)
         const tabs = document.querySelectorAll(".tab");
         const tabContents = document.querySelectorAll(".tab-content");
 
@@ -528,7 +527,6 @@
                 tab.classList.add("active");
                 document.getElementById(`${tab.dataset.tab}-content`).classList.add("active");
 
-                // Se a aba ativa não for "rotas", restaura a posição do mapa
                 if (tab.dataset.tab !== 'rotas') {
                     map.setView(originalCenter, originalZoom);
                 }
@@ -547,55 +545,69 @@
                 const activeContent = document.getElementById(tab.dataset.tab);
                 activeContent.classList.add("active");
 
-                // Se a aba ativa for "map-tab", inicializa o mapa
                 if (tab.dataset.tab === "map-tab") {
-                    initializeMap();  // Chama a função para inicializar o mapa
-                    map.setView(originalCenter, originalZoom);  // Restaura a visão original do mapa
+                    initializeMap();  
+                    map.setView(originalCenter, originalZoom);  
                 }
             });
         });
-            function carregarRotas() {
-                fetch("/rotas")
-                    .then(response => response.json())
-                    .then(data => {
-                        data.rotas.forEach(rota => {
-                            const polyline = L.polyline(
-                                rota.coordenadas.map(coord => [coord.latitude, coord.longitude]),
-                                { color: 'yellow', weight: 4, opacity: 0.7 }
-                            ).addTo(map);
+        function carregarRotas() {
+    fetch("/rotas")
+        .then(response => response.json())
+        .then(data => {
+            const cores = ["blue", "red", "green", "purple", "orange"];
+            const rotasMap = []; 
 
-                            const rotaItem = document.createElement("li");
-                            rotaItem.textContent = rota.nome;
-                            rotaItem.style.cursor = 'pointer';
+            data.rotas.forEach((rota, index) => {
+                const cor = cores[index % cores.length]; 
 
-                            rotaItem.addEventListener("click", () => {
-                                map.fitBounds(polyline.getBounds());
-                            });
+                const polyline = L.polyline(
+                    rota.coordenadas.map(coord => [coord.latitude, coord.longitude]),
+                    { color: cor, weight: 4, opacity: 0.7 } 
+                ).addTo(map);
 
-                            document.getElementById("lista-rotas").appendChild(rotaItem);
-                        });
-                    })
-                    .catch(error => console.error("Erro ao carregar rotas:", error));
-            }
-            
+                rotasMap.push(polyline); 
+
+                const rotaItem = document.createElement("li");
+                rotaItem.textContent = rota.nome;
+                rotaItem.style.cursor = 'pointer';
+                rotaItem.style.color = cor;
+
+                rotaItem.addEventListener("click", () => {
+                    rotasMap.forEach(r => r.setStyle({ opacity: 0.3 }));
+
+                    polyline.setStyle({ opacity: 1 });
+
+                    map.fitBounds(polyline.getBounds());
+                });
+
+                document.getElementById("lista-rotas").appendChild(rotaItem);
+            });
+        })
+        .catch(error => console.error("Erro ao carregar rotas:", error));
+}
+
             document.querySelector(".tab[data-tab='rotas']").addEventListener("click", carregarRotas);
-
             function buscarDadosClimaticos(estado) {
-                fetch(`/clima/estado?estado=${estado}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        document.getElementById("estado-nome").innerHTML = `📍 <strong>Estado:</strong> ${data.local}`;
-                        document.getElementById("estado-temperatura").innerHTML = `🌡️ <strong>Temperatura:</strong> ${data.temperatura} °C`;
-                        document.getElementById("estado-clima").innerHTML = `☁️ <strong>Clima:</strong> ${data.clima}`;
-                        document.getElementById("estado-umidade").innerHTML = `💧 <strong>Umidade:</strong> ${data.umidade}%`;
-                        document.getElementById("estado-vento").innerHTML = `🌬️ <strong>Vento:</strong> ${data.vento} km/h`;
-                        document.getElementById("estado-alerta").innerHTML = data.alerta 
-                            ? `<strong>⚠️ Alerta:</strong> ${data.alerta}` 
-                            : "✅ Nenhum alerta ativo";
-                    })
-                    .catch(error => console.error("Erro ao obter dados do clima:", error));
-            }
+            fetch(`/clima/estado?estado=${estado}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("estado-nome").innerHTML = `📍 <strong>Estado:</strong> ${data.local}`;
+                    document.getElementById("estado-temperatura").innerHTML = `🌡️ <strong>Temperatura:</strong> ${data.temperatura} °C`;
+                    document.getElementById("estado-clima").innerHTML = `☁️ <strong>Clima:</strong> ${data.clima}`;
+                    document.getElementById("estado-umidade").innerHTML = `💧 <strong>Umidade:</strong> ${data.umidade}%`;
+                    document.getElementById("estado-vento").innerHTML = `🌬️ <strong>Vento:</strong> ${data.vento} km/h`;
 
+                    if (data.alerta && data.alerta.length > 0 && data.alerta[0] !== "Nenhum alerta ativo") {
+                        document.getElementById("estado-alerta").innerHTML = data.alerta
+                            .map(alerta => `<li>⚠️ ${alerta}</li>`)
+                            .join("");
+                    } else {
+                        document.getElementById("estado-alerta").innerHTML = "✅ Nenhum alerta ativo";
+                    }
+                })
+                .catch(error => console.error("Erro ao obter dados do clima:", error));
+        }
             function buscarPrevisao(estado) {
                 fetch(`/clima/estado/previsao?estado=${estado}`)
                     .then(response => response.json())
@@ -603,23 +615,19 @@
                         let previsaoHtml = "";
                         let currentDay = "";
                         let dayCounter = -1;
-
                         data.previsoes.forEach(previsao => {
                             const [date, time] = previsao.data_hora.split(" ");
                             const [ano, mes, dia] = date.split("-");
                             const dataFormatada = `${dia}/${mes}/${ano}`;
 
-                            // Quando mudar o dia, inicia uma nova seção
                             if (date !== currentDay) {
                                 currentDay = date;
                                 dayCounter++;
 
-                                // Fechar o bloco anterior (exceto o primeiro)
                                 if (dayCounter > 0) {
                                     previsaoHtml += `</div></div>`;
                                 }
 
-                                // Inicia um novo bloco para o dia
                                 previsaoHtml += `
                                     <div class="forecast-day day-${dayCounter % 5}">
                                         <div class="forecast-header">
@@ -629,7 +637,6 @@
                                 `;
                             }
 
-                            // Adiciona as previsões do dia
                             previsaoHtml += `
                                 <div class="forecast-item">
                                     <div class="time">${time}</div>
@@ -641,7 +648,6 @@
                             `;
                         });
 
-                        // Fecha o último bloco
                         previsaoHtml += `</div></div>`;
 
                         document.getElementById("estado-previsao").innerHTML = previsaoHtml;
@@ -652,3 +658,4 @@
     </script>
 </body>
 </html>
+

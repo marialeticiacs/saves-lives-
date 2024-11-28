@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from app.routes import clima, alerts, rotas  # Importa as rotas que vamos configurar
+from routes import clima, alerts, rotas  # Importa as rotas que vamos configurar
 import os
 
 app = FastAPI()
@@ -17,21 +17,27 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # Rota para servir o index.html
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    file_path = "C:/MariaLetícia/saves-lives-plus/saves-lives/frontend/index.html"
+    file_path = "C:/Users/luyza/PI6/saves-lives-plus/saves-lives/frontend/index.html"
+
+    #file_path = "C:/MariaLetícia/saves-lives-plus/saves-lives/frontend/index.html"
     with open(file_path, "r", encoding="utf-8") as file:
         return HTMLResponse(content=file.read())
 
 # Alteração da rota para exibir a página de criação de alertas
 @app.get("/alertas/criar", response_class=HTMLResponse)
 async def alertas_page():
-    file_path = "C:/MariaLetícia/saves-lives-plus/saves-lives/frontend/css/js/alertas.html"
+    file_path = "C:/Users/luyza/PI6/saves-lives-plus/saves-lives/frontend/css/js/alertas.html"
+
+    #file_path = "C:/MariaLetícia/saves-lives-plus/saves-lives/frontend/css/js/alertas.html"
     with open(file_path, "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
 
 
 @app.get("/alertas/lista", response_class=HTMLResponse)
 async def alertas_lista_page():
-    file_path = "C:/MariaLetícia/saves-lives-plus/saves-lives/frontend/css/js/lista_alertas.html"
+    file_path = "C:/Users/luyza/PI6/saves-lives-plus/saves-lives/frontend/css/js/lista_alertas.html"
+
+    #file_path = "C:/MariaLetícia/saves-lives-plus/saves-lives/frontend/css/js/lista_alertas.html"
     with open(file_path, "r", encoding="utf-8") as f:
         return HTMLResponse(content=f.read())
         

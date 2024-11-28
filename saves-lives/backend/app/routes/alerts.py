@@ -1,96 +1,116 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from pymongo import MongoClient
-from bson import ObjectId
 from typing import Optional
-import os
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
+import sqlite3
+import os
+from fastapi import Body
 
-# Modelo para o alerta
+DB_PATH = "alertas.db"
+
 class Alerta(BaseModel):
     nome: str
     tipo: str
-    condicao: str
-    estado: str  
+    condicao: Optional[str] = None
+    estado: str
     ativo: bool
 
-# Configuração do MongoDB Atlas
-MONGODB_URI = f"mongodb+srv://luyza2129:aUERSWI4GO8mtMsl@pifinal.i7fuk.mongodb.net/?retryWrites=true&w=majority&appName=PIFINAL"
-client = MongoClient(MONGODB_URI)
-db = client['saves_lives_db']  
-alertas_collection = db['alertas'] 
+def init_db():
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS alertas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            tipo TEXT NOT NULL,
+            condicao TEXT,
+            estado TEXT NOT NULL,
+            ativo BOOLEAN NOT NULL
+        )
+        """)
+        conn.commit()
 
-client = MongoClient(
-    MONGODB_URI,
-    tls=True,  # Ativa o TLS/SSL
-    tlsAllowInvalidCertificates=False  # Certifica-se de que certificados inválidos são rejeitados
-)
-
+init_db()
 
 router = APIRouter()
 
-def alerta_to_dict(alerta):
-    alerta["_id"] = str(alerta["_id"])
-    return alerta
-
-
-# Rota para exibir a página de criação de alertas
 @router.get("/criar", response_class=HTMLResponse)
-async def alertas_page():
-    file_path = "C:/MariaLetícia/saves-lives-plus/saves-lives/frontend/css/js/alertas.html" #não esquecer de mudar para o seu caminho
-    with open(file_path, "r", encoding="utf-8") as f:
-        return HTMLResponse(content=f.read())
+async def criar_alerta_page():
+    try:
+        file_path = "C:/Users/luyza/PI6/saves-lives-plus/saves-lives/frontend/css/js/alertas.html"  #Não esquecer de mudar aqui para o seu caminho
+        with open(file_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao carregar a página: {str(e)}")
 
-# Rota para criar um novo alerta
 @router.post("/", response_model=dict)
 async def criar_alerta(alerta: Alerta):
     try:
-        alerta_id = alertas_collection.insert_one(alerta.dict()).inserted_id
-        return {"mensagem": "Alerta criado com sucesso!", "id": str(alerta_id)}
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+            INSERT INTO alertas (nome, tipo, condicao, estado, ativo)
+            VALUES (?, ?, ?, ?, ?)
+            """, (alerta.nome, alerta.tipo, alerta.condicao, alerta.estado, alerta.ativo))
+            conn.commit()
+            return {"mensagem": "Alerta criado com sucesso!", "id": cursor.lastrowid}
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Erro ao criar o alerta: " + str(e))
+        raise HTTPException(status_code=500, detail=f"Erro ao criar o alerta: {str(e)}")
 
-# Rota para listar todos os alertas
 @router.get("/lista", response_model=dict)
 async def listar_alertas():
     try:
-        alertas = [alerta_to_dict(alerta) for alerta in alertas_collection.find({})]
-        return {"alertas": alertas}
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM alertas")
+            alertas = [
+                {"id": row[0], "nome": row[1], "tipo": row[2], "condicao": row[3], "estado": row[4], "ativo": bool(row[5])}
+                for row in cursor.fetchall()
+            ]
+            return {"alertas": alertas}
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Erro ao listar alertas: " + str(e))
+        raise HTTPException(status_code=500, detail=f"Erro ao listar alertas: {str(e)}")
 
-# Rota para atualizar o status de um alerta
-@router.put("/{alerta_id}/status", response_model=dict)
-async def atualizar_status_alerta(alerta_id: str, ativo: bool):
-    try:
-        resultado = alertas_collection.update_one({"_id": ObjectId(alerta_id)}, {"$set": {"ativo": ativo}})
-        if resultado.modified_count == 1:
-            return {"mensagem": "Status do alerta atualizado com sucesso"}
-        else:
-            return {"mensagem": "Nenhuma atualização foi feita"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Erro ao atualizar o status do alerta: " + str(e))
-
-# Rota para obter detalhes de um alerta específico
 @router.get("/{alerta_id}", response_model=dict)
-async def obter_alerta(alerta_id: str):
+async def obter_alerta(alerta_id: int):
     try:
-        alerta = alertas_collection.find_one({"_id": ObjectId(alerta_id)})
-        if alerta:
-            return alerta_to_dict(alerta)
-        else:
-            raise HTTPException(status_code=404, detail="Alerta não encontrado")
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM alertas WHERE id = ?", (alerta_id,))
+            row = cursor.fetchone()
+            if row:
+                return {"id": row[0], "nome": row[1], "tipo": row[2], "condicao": row[3], "estado": row[4], "ativo": bool(row[5])}
+            else:
+                raise HTTPException(status_code=404, detail="Alerta não encontrado")
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Erro ao obter o alerta: " + str(e))
+        raise HTTPException(status_code=500, detail=f"Erro ao obter o alerta: {str(e)}")
 
-# Rota para deletar um alerta
 @router.delete("/{alerta_id}", response_model=dict)
-async def deletar_alerta(alerta_id: str):
+async def deletar_alerta(alerta_id: int):
     try:
-        resultado = alertas_collection.delete_one({"_id": ObjectId(alerta_id)})
-        if resultado.deleted_count == 1:
-            return {"mensagem": "Alerta deletado com sucesso"}
-        else:
-            raise HTTPException(status_code=404, detail="Alerta não encontrado")
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM alertas WHERE id = ?", (alerta_id,))
+            conn.commit()
+            if cursor.rowcount > 0:
+                return {"mensagem": "Alerta deletado com sucesso"}
+            else:
+                raise HTTPException(status_code=404, detail="Alerta não encontrado")
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Erro ao deletar o alerta: " + str(e))
+        raise HTTPException(status_code=500, detail=f"Erro ao deletar o alerta: {str(e)}")
+
+
+
+@router.put("/{alerta_id}/status", response_model=dict)
+async def atualizar_status_alerta(alerta_id: int, ativo: bool):
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE alertas SET ativo = ? WHERE id = ?", (ativo, alerta_id))
+            conn.commit()
+            if cursor.rowcount > 0:
+                return {"mensagem": "Status do alerta atualizado com sucesso!"}
+            else:
+                raise HTTPException(status_code=404, detail="Alerta não encontrado")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao atualizar o status do alerta: {str(e)}")
