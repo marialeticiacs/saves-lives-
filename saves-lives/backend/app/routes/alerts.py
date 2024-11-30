@@ -37,7 +37,10 @@ router = APIRouter()
 @router.get("/criar", response_class=HTMLResponse)
 async def criar_alerta_page():
     try:
-        file_path = "C:/Users/luyza/PI6/saves-lives-plus/saves-lives/frontend/css/js/alertas.html"  #Não esquecer de mudar aqui para o seu caminho
+        #file_path = "C:/Users/luyza/PI6/saves-lives-plus/saves-lives/frontend/css/js/alertas.html"  #Não esquecer de mudar aqui para o seu caminho
+        
+        file_path = "C:/MariaLetícia/saves-lives-plus/saves-lives/frontend/css/js/alertas.html" 
+        
         with open(file_path, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
     except Exception as e:

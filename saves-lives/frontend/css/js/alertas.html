@@ -111,24 +111,29 @@
         .alerta button:hover {
             background-color: #d32f2f;
         }
+
+        .btn-blue {
+            background-color: #4A90E2;
+            margin-right: 10px;
+        }
+
+        .btn-blue:hover {
+            background-color: #00509E;
+        }
     </style>
 </head>
 <body>
-    <div class="header">Configurar Alertas</div>
+    <div class="header">Configuração Alertas</div>
 
-    
     <div class="tabs">
         <div class="tab active" data-tab="cadastrar-alerta">Cadastrar Alerta</div>
         <div class="tab" data-tab="ver-alertas">Ver Alertas</div>
     </div>
 
-    <button class="back-button" onclick="window.location.href='/'">
-        Voltar
-    </button>
-
     <div id="cadastrar-alerta" class="content active">
         <div class="container">
             <h2>Cadastrar Alerta</h2>
+            
             <form id="form-alerta">
                 <label for="alerta-nome">Nome do Alerta</label>
                 <input type="text" id="alerta-nome" required>
@@ -181,7 +186,11 @@
                     <option value="false">Inativo</option>
                 </select>
 
-                <button type="submit">Salvar Alerta</button>
+                <!-- Botões de Navegação -->
+                <div class="button-group">
+                    <button class="btn-blue" onclick="window.location.href='/'">Voltar</button>
+                    <button type="submit">Salvar Alerta</button>
+                </div>                
             </form>
         </div>
     </div>
@@ -268,8 +277,8 @@
                     <button onclick="alterarStatus(${alerta.id}, ${!alerta.ativo})">
                         ${alerta.ativo ? "Desativar" : "Ativar"}
                     </button>
-                    <button onclick="deletarAlerta(${alerta.id})" style="margin-left: 10px; background-color: #007BFF;">
-                        Apagar
+                    <button class="btn-blue" onclick="deletarAlerta(${alerta.id})" style="margin-left: 10px; background-color: #007BFF;">
+                        Deletar
                     </button>
                 `;
                 alertasContainer.appendChild(alertaDiv);
