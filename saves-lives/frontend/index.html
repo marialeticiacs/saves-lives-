@@ -556,17 +556,21 @@
         .then(response => response.json())
         .then(data => {
             const cores = ["blue", "red", "green", "purple", "orange"];
-            const rotasMap = []; 
+            const rotasMap = [];
+
+            // Limpa o conteúdo da lista antes de adicionar as rotas
+            const listaRotas = document.getElementById("lista-rotas");
+            listaRotas.innerHTML = ""; // Remove todas as rotas existentes
 
             data.rotas.forEach((rota, index) => {
-                const cor = cores[index % cores.length]; 
+                const cor = cores[index % cores.length];
 
                 const polyline = L.polyline(
                     rota.coordenadas.map(coord => [coord.latitude, coord.longitude]),
-                    { color: cor, weight: 4, opacity: 0.7 } 
+                    { color: cor, weight: 4, opacity: 0.7 }
                 ).addTo(map);
 
-                rotasMap.push(polyline); 
+                rotasMap.push(polyline);
 
                 const rotaItem = document.createElement("li");
                 rotaItem.textContent = rota.nome;
@@ -575,13 +579,12 @@
 
                 rotaItem.addEventListener("click", () => {
                     rotasMap.forEach(r => r.setStyle({ opacity: 0.3 }));
-
                     polyline.setStyle({ opacity: 1 });
 
                     map.fitBounds(polyline.getBounds());
                 });
 
-                document.getElementById("lista-rotas").appendChild(rotaItem);
+                listaRotas.appendChild(rotaItem);
             });
         })
         .catch(error => console.error("Erro ao carregar rotas:", error));
@@ -589,25 +592,29 @@
 
             document.querySelector(".tab[data-tab='rotas']").addEventListener("click", carregarRotas);
             function buscarDadosClimaticos(estado) {
-            fetch(`/clima/estado?estado=${estado}`)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById("estado-nome").innerHTML = `📍 <strong>Estado:</strong> ${data.local}`;
-                    document.getElementById("estado-temperatura").innerHTML = `🌡️ <strong>Temperatura:</strong> ${data.temperatura} °C`;
-                    document.getElementById("estado-clima").innerHTML = `☁️ <strong>Clima:</strong> ${data.clima}`;
-                    document.getElementById("estado-umidade").innerHTML = `💧 <strong>Umidade:</strong> ${data.umidade}%`;
-                    document.getElementById("estado-vento").innerHTML = `🌬️ <strong>Vento:</strong> ${data.vento} km/h`;
+    fetch(`/clima/estado?estado=${estado}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("estado-nome").innerHTML = `📍 <strong>Estado:</strong> ${data.local}`;
+            document.getElementById("estado-temperatura").innerHTML = `🌡️ <strong>Temperatura:</strong> ${data.temperatura} °C`;
+            document.getElementById("estado-clima").innerHTML = `☁️ <strong>Clima:</strong> ${data.clima}`;
+            document.getElementById("estado-umidade").innerHTML = `💧 <strong>Umidade:</strong> ${data.umidade}%`;
+            document.getElementById("estado-vento").innerHTML = `🌬️ <strong>Vento:</strong> ${data.vento} km/h`;
 
-                    if (data.alerta && data.alerta.length > 0 && data.alerta[0] !== "Nenhum alerta ativo") {
-                        document.getElementById("estado-alerta").innerHTML = data.alerta
-                            .map(alerta => `<li>⚠️ ${alerta}</li>`)
-                            .join("");
-                    } else {
-                        document.getElementById("estado-alerta").innerHTML = "✅ Nenhum alerta ativo";
-                    }
-                })
-                .catch(error => console.error("Erro ao obter dados do clima:", error));
-        }
+            if (data.alerta && data.alerta.length > 0 && data.alerta[0] !== "Nenhum alerta ativo") {
+                // Remove duplicados usando o Set e converte de volta para um array
+                const alertasUnicos = [...new Set(data.alerta)];
+                // Renderiza os alertas únicos
+                document.getElementById("estado-alerta").innerHTML = alertasUnicos
+                    .map(alerta => `<li>⚠️ ${alerta}</li>`)
+                    .join("");
+            } else {
+                document.getElementById("estado-alerta").innerHTML = "✅ Sem riscos detectados";
+            }
+        })
+        .catch(error => console.error("Erro ao obter dados do clima:", error));
+}
+
             function buscarPrevisao(estado) {
                 fetch(`/clima/estado/previsao?estado=${estado}`)
                     .then(response => response.json())

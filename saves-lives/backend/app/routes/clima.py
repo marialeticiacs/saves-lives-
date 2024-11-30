@@ -8,7 +8,7 @@ OWM_API_KEY = "7448e6299383b00ae5d0ce6dd4df2627"
 OWM_API_URL = "https://api.openweathermap.org/data/2.5/weather"
 
 def buscar_alertas_personalizados(estado: str, data_climatica: dict) -> list:
-    conn = sqlite3.connect("C:/MariaLetícia/saves-lives-plus/saves-lives/backend/app/alertas.db")
+    conn = sqlite3.connect("C:/Users/luyza/PI6/saves-lives-plus/saves-lives/backend/app/alertas.db")
     cursor = conn.cursor()
 
     # Busca alertas ativos
